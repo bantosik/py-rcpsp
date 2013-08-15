@@ -26,7 +26,10 @@ Activity.DUMMY_END = Activity("end",0, 0)
 
 def add_resource_usage(resource_usage, demand):
     """
-    Resources demand are added to resource_usage. REsource_usage will be updated  
+    Resources demand are added to resource_usage. resource_usage will be updated
+    
+    :param resource_usage: dictionary containing usage of every resource will be updated with demand param
+    :param demand: dictionary of resource demands to be added to resource_usage  
     """
     for resource, amount in demand.iteritems():
         if resource in resource_usage:
@@ -36,11 +39,17 @@ def add_resource_usage(resource_usage, demand):
             
 
 
-def is_resource_usage_greater_than_supply(resource_usage, resources):
-    for resource in resources:
-        if resource not in resource_usage:
+def is_resource_usage_greater_than_supply(resource_demand, resource_supply):
+    """
+    Checks if usage of resource (resource_demand) does not exceed overall supply (resource_supply)
+    
+    :param resource_demand: state of usage which is to be checked
+    :param resource_supply: actual supply of resources
+    """
+    for resource in resource_supply:
+        if resource not in resource_demand:
             continue    
-        if resource_usage[resource] > resources[resource]:
+        if resource_demand[resource] > resource_supply[resource]:
             return True
     else:
         return False
