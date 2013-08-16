@@ -3,7 +3,7 @@ Created on 31 Jul 2013
 
 @author: Aleksandra
 '''
-
+import deap
 from operator import itemgetter
 from copy import copy
 from collections import defaultdict 
