@@ -3,7 +3,8 @@ Created on 31 Jul 2013
 
 @author: Aleksandra
 '''
-import deap
+from random import choice
+from deap import algorithms, tools, base, creator
 from operator import itemgetter
 from copy import copy
 from collections import defaultdict 
@@ -21,6 +22,7 @@ class Activity(object):
 
 Activity.DUMMY_START = Activity("start",0, 0)
 Activity.DUMMY_END = Activity("end",0, 0)
+Activity.DUMMY_NODES = [Activity.DUMMY_START, Activity.DUMMY_END]
 
     
 
@@ -67,7 +69,42 @@ def activity_in_conflict_in_precedence(problem, solution, activity, proposed_sta
     else:
         return False
 
-def sgs_2_dict(sgs, problem):
+
+def find_all_elements_without_predecessors(problem):
+    return problem.successors(Activity.DUMMY_START)
+    
+
+def extract_random_activity_from_list(ready_to_schedule):
+    r = choice(list(ready_to_schedule))
+    ready_to_schedule.remove(r)
+    return r
+
+
+def push_ready_activities_to_ready_to_schedule(current_activity, problem, not_ready_to_schedule, ready_to_schedule):
+    for activity in problem.non_dummy_successors(current_activity):
+        for predecessor in  problem.non_dummy_predecessors(activity):
+            if predecessor in not_ready_to_schedule.union(ready_to_schedule):
+                break
+        else:
+            not_ready_to_schedule.remove(activity)
+            ready_to_schedule.add(activity)
+        
+
+def generate_random_sgs_from_problem(problem):
+    ready_to_schedule = set(find_all_elements_without_predecessors(problem)) #set
+    not_ready_to_schedule =  problem.non_dummy_activities() - set(ready_to_schedule)
+    
+    sgs_to_return = []
+    
+    for i in xrange(len(problem.non_dummy_activities())):
+        current_activity = extract_random_activity_from_list(ready_to_schedule)
+        sgs_to_return.append(current_activity)
+        push_ready_activities_to_ready_to_schedule(current_activity, problem, not_ready_to_schedule, ready_to_schedule)
+    return sgs_to_return
+        
+    
+
+def generate_solution_from_serial_generation_scheme(sgs, problem):
     solution = Solution()
     resource_usages_in_time = defaultdict(dict)
     
@@ -112,10 +149,34 @@ class Solution:   # fenotyp rozwiazania
         
     
         
-class Solver(object):
+class GeneticAlgorithmSolver(object):
+    # n= 300 ; cxpb = 0.5 ; mutpb = 0.2 ; ngen = 40
+    def __init__(self, size_of_population = 300, crossover_probability = 0.5, mutation_probability = 0.2, number_of_generations = 40):
+        self.size_of_population = size_of_population
+        self.crossover_probability = crossover_probability
+        self.mutation_probability = mutation_probability
+        self.number_of_generations = number_of_generations
+
     
+    def generate_toolbox_for_problem(self):
+        toolbox = base.Toolbox()
+        creator.create("FitnessMin", base.Fitness, weights=(-1.0,))
+        creator.create("Individual", list, fitness=creator.FitnessMin)
+        
+        toolbox.register("individual", self.generate_individual)
+        
+    def generate_individual(self):
+        pass
+        
+     
     def solve(self, problem):
-        return Solution() 
+        self.initialize_problem(problem)
+        
+        toolbox = self.generate_toolbox_for_problem()
+        population = toolbox.population(n = self.size_of_population)
+        algorithms.eaSimple(population, toolbox, cxpb = self.crossover_probability , mutpb = self.mutation_probability, ngen = self.number_of_generations, verbose=False)
+        return self.generate_solution_from_individual(tools.selBest(population, 1))
+        
 
 class Problem(object):
     
@@ -136,11 +197,21 @@ class Problem(object):
     def activities(self):
         return self.activities_set
     
+    def non_dummy_activities(self):
+        return self.activities_set - set([Activity.DUMMY_START, Activity.DUMMY_END])
+    
     def successors(self, activity):
         return self.activity_graph[activity]
     
     def predecessors(self, activity):
         return self.predecessors_dict[activity]
+    
+    def non_dummy_predecessors(self,activity):
+        return [x for x in self.predecessors(activity) if x not in Activity.DUMMY_NODES]
+    
+    def non_dummy_successors(self,activity):
+        return [x for x in self.successors(activity) if x not in Activity.DUMMY_NODES]
+    
     
     def compute_latest_start(self, activity):
         """Computes latest possible start for activity with dependencies with other 

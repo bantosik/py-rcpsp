@@ -43,7 +43,7 @@ class Test(unittest.TestCase):
         self.sgs = [self.activity2, self.activity4, self.activity1, self.activity6, self.activity3, self.activity5]
 
     def test_solve(self):
-        solver = Solver()
+        solver = GeneticAlgorithmSolver()
         solution = solver.solve(self.problem)
         self.assertEqual(solution.makespan, 13, "Makespan is not equal to 13")
         
@@ -56,7 +56,7 @@ class Test(unittest.TestCase):
         self.assertEqual(makespan, 13, "Makespan is not equal to 13")
     
     def test_sgs_2_dict(self):
-        solution = sgs_2_dict(self.sgs, self.problem)
+        solution = generate_solution_from_serial_generation_scheme(self.sgs, self.problem)
         self.assertEqual(solution, self.start_times, "Expected %s, got %s" % (self.start_times, solution) )  
         
     def test_sgs_2_dict_2(self):
@@ -68,7 +68,7 @@ class Test(unittest.TestCase):
                           activity2:[Activity.DUMMY_END]}
         resources = {1:7}
         problem = Problem(activity_graph, resources)  
-        solution_sgs = sgs_2_dict([activity1, activity2], problem)
+        solution_sgs = generate_solution_from_serial_generation_scheme([activity1, activity2], problem)
         self.assertEqual(problem.compute_makespan(solution_sgs), 7, "Makespan is not egual 7")
                 
 
@@ -101,7 +101,33 @@ class Test(unittest.TestCase):
         o.set_start_time_for_activity(self.activity2, 3)
         o.set_start_time_for_activity(self.activity1, 5)
         self.assertEqual(s, o, "These solutions should be equal %s, %s" % (str(s), str(o)))
+    
+    def test_push_ready_activities_to_ready_to_schedule(self):
+        activity_graph = {Activity.DUMMY_START: [self.activity1],
+                          self.activity1: [self.activity2, self.activity3],
+                          self.activity2: [self.activity4],
+                          self.activity3: [self.activity4],
+                          self.activity4: [Activity.DUMMY_END]}
+        problem = Problem(activity_graph, {})
+        ready_to_schedule = set()
+        not_ready_to_schedule = set([self.activity2, self.activity3, self.activity4])
+        current_activity = self.activity1
+        push_ready_activities_to_ready_to_schedule(current_activity, problem, not_ready_to_schedule, ready_to_schedule)
+        self.assertEqual(ready_to_schedule, set([self.activity2, self.activity3]), "Ready to schedule should be update correctly")
+        self.assertEqual(not_ready_to_schedule, set([self.activity4]), "Not ready to schedule should be update correctly")
         
+    def test_generate_random_sgs_from_problem(self):
+        sgs_to_return = generate_random_sgs_from_problem(self.problem)
+        self.assertEqual(set(sgs_to_return), self.problem.non_dummy_activities(), "Sgs should have all activities")
+        n = len(sgs_to_return)     
+        for i in range(n):
+            for j in range(i,n):
+                activity1 = sgs_to_return[i] 
+                activity2 = sgs_to_return[j]
+                self.assertFalse(activity2 in self.problem.predecessors(activity1), "Activity2 is prodecessor of ACtivity1")
+           
+                             
+
         
             
 
