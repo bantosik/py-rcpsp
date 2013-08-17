@@ -44,7 +44,8 @@ class Test(unittest.TestCase):
     def test_solve(self):
         solver = GeneticAlgorithmSolver(self.problem)
         solution = solver.solve()
-        self.assertEqual(solution.makespan, 13, "Makespan is not equal to 13")
+        makespan = self.problem.compute_makespan(solution)
+        self.assertEqual(makespan, 13, "Makespan is not equal to 13, in fact it is %d" % makespan)
         
     def test_check_if_solution_is_feasible(self):
         is_feasible = self.problem.check_if_solution_feasible(self.start_times)  
