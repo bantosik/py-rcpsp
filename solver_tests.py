@@ -115,13 +115,13 @@ class Test(unittest.TestCase):
         not_ready_to_schedule = set([self.activity2, self.activity3, self.activity4])
         current_activity = self.activity1
         generator = SerialScheduleGenerationSchemeGenerator(problem)
-        generator.push_ready_activities_to_ready_to_schedule(current_activity, not_ready_to_schedule, ready_to_schedule)
+        generator._push_ready_activities_to_ready_to_schedule(current_activity, not_ready_to_schedule, ready_to_schedule)
         self.assertEqual(ready_to_schedule, set([self.activity2, self.activity3]), "Ready to schedule should be update correctly")
         self.assertEqual(not_ready_to_schedule, set([self.activity4]), "Not ready to schedule should be update correctly")
         
     def test_generate_random_sgs_from_problem(self):
         generator = SerialScheduleGenerationSchemeGenerator(self.problem)
-        sgs_to_return = generator.generate_random_sgs_from_problem()
+        sgs_to_return = generator.generate_random_sgs()
         self.assertEqual(set(sgs_to_return), self.problem.non_dummy_activities(), "Sgs should have all activities")
         n = len(sgs_to_return)     
         for i in range(n):

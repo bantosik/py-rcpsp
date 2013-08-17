@@ -69,24 +69,24 @@ class SerialScheduleGenerationSchemeGenerator:
     def __init__(self, problem):
         self.problem = problem
         
-    def generate_random_sgs_from_problem(self):
+    def generate_random_sgs(self):
         ready_to_schedule = set(self.problem.find_all_elements_without_predecessors()) #set
         not_ready_to_schedule =  self.problem.non_dummy_activities() - set(ready_to_schedule)
         
         sgs_to_return = []
         
         for i in xrange(len(self.problem.non_dummy_activities())):
-            current_activity = self.extract_random_activity_from_list(ready_to_schedule)
+            current_activity = self._extract_random_activity_from_list(ready_to_schedule)
             sgs_to_return.append(current_activity)
-            self.push_ready_activities_to_ready_to_schedule(current_activity, not_ready_to_schedule, ready_to_schedule)
+            self._push_ready_activities_to_ready_to_schedule(current_activity, not_ready_to_schedule, ready_to_schedule)
         return sgs_to_return
         
-    def extract_random_activity_from_list(self, ready_to_schedule):
+    def _extract_random_activity_from_list(self, ready_to_schedule):
         r = choice(list(ready_to_schedule))
         ready_to_schedule.remove(r)
         return r
     
-    def push_ready_activities_to_ready_to_schedule(self, current_activity, not_ready_to_schedule, ready_to_schedule):
+    def _push_ready_activities_to_ready_to_schedule(self, current_activity, not_ready_to_schedule, ready_to_schedule):
         for activity in self.problem.non_dummy_successors(current_activity):
             for predecessor in  self.problem.non_dummy_predecessors(activity):
                 if predecessor in not_ready_to_schedule.union(ready_to_schedule):
@@ -94,10 +94,7 @@ class SerialScheduleGenerationSchemeGenerator:
             else:
                 not_ready_to_schedule.remove(activity)
                 ready_to_schedule.add(activity)
-            
-    
-   
-                    
+                          
 class Solution(dict):   # fenotyp rozwiazania
     def __init__(self):
         self.makespan = 0
