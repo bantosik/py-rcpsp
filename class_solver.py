@@ -5,7 +5,6 @@ Created on 31 Jul 2013
 '''
 from random import choice
 from deap import algorithms, tools, base, creator
-from operator import itemgetter
 from copy import copy
 from collections import defaultdict 
 
@@ -66,84 +65,80 @@ def activity_in_conflict_in_precedence(problem, solution, activity, proposed_sta
     else:
         return False
 
-
-def find_all_elements_without_predecessors(problem):
-    return problem.successors(Activity.DUMMY_START)
-    
-
-def extract_random_activity_from_list(ready_to_schedule):
-    r = choice(list(ready_to_schedule))
-    ready_to_schedule.remove(r)
-    return r
-
-
-def push_ready_activities_to_ready_to_schedule(current_activity, problem, not_ready_to_schedule, ready_to_schedule):
-    for activity in problem.non_dummy_successors(current_activity):
-        for predecessor in  problem.non_dummy_predecessors(activity):
-            if predecessor in not_ready_to_schedule.union(ready_to_schedule):
-                break
-        else:
-            not_ready_to_schedule.remove(activity)
-            ready_to_schedule.add(activity)
+class SerialScheduleGenerationSchemeGenerator:
+    def __init__(self, problem):
+        self.problem = problem
         
-
-def generate_random_sgs_from_problem(problem):
-    ready_to_schedule = set(find_all_elements_without_predecessors(problem)) #set
-    not_ready_to_schedule =  problem.non_dummy_activities() - set(ready_to_schedule)
-    
-    sgs_to_return = []
-    
-    for i in xrange(len(problem.non_dummy_activities())):
-        current_activity = extract_random_activity_from_list(ready_to_schedule)
-        sgs_to_return.append(current_activity)
-        push_ready_activities_to_ready_to_schedule(current_activity, problem, not_ready_to_schedule, ready_to_schedule)
-    return sgs_to_return
+    def generate_random_sgs_from_problem(self):
+        ready_to_schedule = set(self.problem.find_all_elements_without_predecessors()) #set
+        not_ready_to_schedule =  self.problem.non_dummy_activities() - set(ready_to_schedule)
         
+        sgs_to_return = []
+        
+        for i in xrange(len(self.problem.non_dummy_activities())):
+            current_activity = self.extract_random_activity_from_list(ready_to_schedule)
+            sgs_to_return.append(current_activity)
+            self.push_ready_activities_to_ready_to_schedule(current_activity, not_ready_to_schedule, ready_to_schedule)
+        return sgs_to_return
+        
+    def extract_random_activity_from_list(self, ready_to_schedule):
+        r = choice(list(ready_to_schedule))
+        ready_to_schedule.remove(r)
+        return r
     
-
-def generate_solution_from_serial_generation_scheme(sgs, problem):
-    solution = Solution()
-    resource_usages_in_time = defaultdict(ResourceUsage)
-    
-    for activity in sgs:
-        latest_start = problem.compute_latest_start(activity)
-        start_time = 0  
-        for time_unit in reversed(range(latest_start+1)):
-             actual_resource_usage = copy(resource_usages_in_time[time_unit])
-             actual_resource_usage.add_resource_usage(activity.demand)
-             if (actual_resource_usage.is_resource_usage_greater_than_supply(problem.resources) or (activity_in_conflict_in_precedence(problem, solution, activity, time_unit))):
-                
-                 start_time = time_unit + 1
-                 break
-        solution.set_start_time_for_activity(activity, start_time)
-        update_resource_usages_in_time(resource_usages_in_time, activity, start_time)
-    return solution
-
+    def push_ready_activities_to_ready_to_schedule(self, current_activity, not_ready_to_schedule, ready_to_schedule):
+        for activity in self.problem.non_dummy_successors(current_activity):
+            for predecessor in  self.problem.non_dummy_predecessors(activity):
+                if predecessor in not_ready_to_schedule.union(ready_to_schedule):
+                    break
+            else:
+                not_ready_to_schedule.remove(activity)
+                ready_to_schedule.add(activity)
             
-class Solution:   # fenotyp rozwiazania
+    
+   
+                    
+class Solution(dict):   # fenotyp rozwiazania
     def __init__(self):
         self.makespan = 0
-        self.solution={}
-        self.solution[Activity.DUMMY_START] = 0
+        self[Activity.DUMMY_START] = 0
         
     def set_start_time_for_activity(self, activity, start_time):
-        self.solution[activity] = start_time
+        self[activity] = start_time
         
     def get_start_time(self, activity):
-        return self.solution[activity]
+        return self[activity]
         
     def __str__(self):
-        return "Solution: " + str(self.solution)
+        return "Solution: " + super.__str__(self)
     
     def __eq__(self, other):
-        if len(self.solution) != len(other.solution):
+        if len(self) != len(other):
             return False
         
-        for i,j in self.solution.iteritems():
-            if other.solution[i] != j:
+        for i,j in self.iteritems():
+            if other[i] != j:
                 return False
         return True
+    @staticmethod
+    def generate_solution_from_serial_schedule_generation_scheme(sgs, problem):
+        solution = Solution()
+        resource_usages_in_time = defaultdict(ResourceUsage)
         
+        for activity in sgs:
+            latest_start = problem.compute_latest_start(activity)
+            start_time = 0  
+            for time_unit in reversed(range(latest_start+1)):
+                 actual_resource_usage = copy(resource_usages_in_time[time_unit])
+                 actual_resource_usage.add_resource_usage(activity.demand)
+                 if (actual_resource_usage.is_resource_usage_greater_than_supply(problem.resources) or (activity_in_conflict_in_precedence(problem, solution, activity, time_unit))):
+                    
+                     start_time = time_unit + 1
+                     break
+            solution.set_start_time_for_activity(activity, start_time)
+            update_resource_usages_in_time(resource_usages_in_time, activity, start_time)
+        return solution
+            
     
         
 class GeneticAlgorithmSolver(object):
@@ -242,7 +237,7 @@ class Problem(object):
     
     def compute_makespan(self, activities_start_times):
         makespan = 0                                                                                                                                                                                                                                             
-        for activity, start_time in activities_start_times.solution.iteritems():
+        for activity, start_time in activities_start_times.iteritems():
             when_activity_ends = activity.duration + start_time
             if when_activity_ends >= makespan:
                 makespan = when_activity_ends
@@ -252,10 +247,13 @@ class Problem(object):
         makespan = self.compute_makespan(activities_start_times)
         for i in xrange(makespan):
             resource_usage = ResourceUsage()
-            for activity, start_time in activities_start_times.solution.iteritems():
+            for activity, start_time in activities_start_times.iteritems():
                 if start_time <= i < start_time + activity.duration:
                     resource_usage.add_resource_usage(activity.demand)
             
             if resource_usage.is_resource_usage_greater_than_supply( self.resources):
                 return False
         return True
+    
+    def find_all_elements_without_predecessors(self):
+        return self.successors(Activity.DUMMY_START)

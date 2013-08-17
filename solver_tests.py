@@ -56,7 +56,7 @@ class Test(unittest.TestCase):
         self.assertEqual(makespan, 13, "Makespan is not equal to 13")
     
     def test_sgs_2_dict(self):
-        solution = generate_solution_from_serial_generation_scheme(self.sgs, self.problem)
+        solution = Solution.generate_solution_from_serial_schedule_generation_scheme(self.sgs, self.problem)
         self.assertEqual(solution, self.start_times, "Expected %s, got %s" % (self.start_times, solution) )  
         
     def test_sgs_2_dict_2(self):
@@ -68,7 +68,7 @@ class Test(unittest.TestCase):
                           activity2:[Activity.DUMMY_END]}
         resources = {1:7}
         problem = Problem(activity_graph, resources)  
-        solution_sgs = generate_solution_from_serial_generation_scheme([activity1, activity2], problem)
+        solution_sgs = Solution.generate_solution_from_serial_schedule_generation_scheme([activity1, activity2], problem)
         self.assertEqual(problem.compute_makespan(solution_sgs), 7, "Makespan is not egual 7")
                 
 
@@ -114,12 +114,14 @@ class Test(unittest.TestCase):
         ready_to_schedule = set()
         not_ready_to_schedule = set([self.activity2, self.activity3, self.activity4])
         current_activity = self.activity1
-        push_ready_activities_to_ready_to_schedule(current_activity, problem, not_ready_to_schedule, ready_to_schedule)
+        generator = SerialScheduleGenerationSchemeGenerator(problem)
+        generator.push_ready_activities_to_ready_to_schedule(current_activity, not_ready_to_schedule, ready_to_schedule)
         self.assertEqual(ready_to_schedule, set([self.activity2, self.activity3]), "Ready to schedule should be update correctly")
         self.assertEqual(not_ready_to_schedule, set([self.activity4]), "Not ready to schedule should be update correctly")
         
     def test_generate_random_sgs_from_problem(self):
-        sgs_to_return = generate_random_sgs_from_problem(self.problem)
+        generator = SerialScheduleGenerationSchemeGenerator(self.problem)
+        sgs_to_return = generator.generate_random_sgs_from_problem()
         self.assertEqual(set(sgs_to_return), self.problem.non_dummy_activities(), "Sgs should have all activities")
         n = len(sgs_to_return)     
         for i in range(n):
