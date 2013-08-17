@@ -82,7 +82,9 @@ class Test(unittest.TestCase):
         self.assertIs(succ_list[0], self.activity5, "activity5 should be successor of the activity3")
         
     def test_update_resource_usages_in_time(self):
-        resource_usages_in_time = {1: {1:2,2:3},2 : {}}
+        resource_usages_in_time = defaultdict(dict)
+        resource_usages_in_time[1] = ResourceUsage({1:2,2:3})
+        resource_usages_in_time[2] = ResourceUsage()
         activity1 = Activity("a1",2,{1:2})
         point_in_time_1 = 1
         update_resource_usages_in_time(resource_usages_in_time, activity1, point_in_time_1)

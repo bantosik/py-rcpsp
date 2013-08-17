@@ -25,41 +25,38 @@ Activity.DUMMY_END = Activity("end",0, 0)
 Activity.DUMMY_NODES = [Activity.DUMMY_START, Activity.DUMMY_END]
 
     
-
-def add_resource_usage(resource_usage, demand):
-    """
-    Resources demand are added to resource_usage. resource_usage will be updated
-    
-    :param resource_usage: dictionary containing usage of every resource will be updated with demand param
-    :param demand: dictionary of resource demands to be added to resource_usage  
-    """
-    for resource, amount in demand.iteritems():
-        if resource in resource_usage:
-            resource_usage[resource] = resource_usage[resource] + amount
-        else:
-            resource_usage[resource] = amount
-            
-
-
-def is_resource_usage_greater_than_supply(resource_demand, resource_supply):
-    """
-    Checks if usage of resource (resource_demand) does not exceed overall supply (resource_supply)
-    
-    :param resource_demand: state of usage which is to be checked
-    :param resource_supply: actual supply of resources
-    """
-    for resource in resource_supply:
-        if resource not in resource_demand:
-            continue    
-        if resource_demand[resource] > resource_supply[resource]:
-            return True
-    else:
-        return False
+class ResourceUsage(dict):
+    def add_resource_usage(self, demand):
+        """
+        Resources demand are added to self.
         
+        :param demand: dictionary of resource demands to be added to self  
+        """
+        for resource, amount in demand.iteritems():
+            if resource in self:
+                self[resource] = self[resource] + amount
+            else:
+                self[resource] = amount
+                
+    def is_resource_usage_greater_than_supply(self, resource_supply):
+        """
+        Checks if usage of resource does not exceed overall supply (resource_supply)
+        
+        :param self: state of usage which is to be checked
+        :param resource_supply: actual supply of resources
+        """
+        for resource in resource_supply:
+            if resource not in self:
+                continue    
+            if self[resource] > resource_supply[resource]:
+                return True
+        else:
+            return False
+            
 def update_resource_usages_in_time(resource_usages_in_time, activity, point_in_time):
     for point in range(point_in_time, point_in_time + activity.duration):
         actual_resource_usage = resource_usages_in_time[point]
-        add_resource_usage(actual_resource_usage, activity.demand)
+        actual_resource_usage.add_resource_usage(activity.demand)
     
   
 def activity_in_conflict_in_precedence(problem, solution, activity, proposed_start_time):
@@ -106,15 +103,15 @@ def generate_random_sgs_from_problem(problem):
 
 def generate_solution_from_serial_generation_scheme(sgs, problem):
     solution = Solution()
-    resource_usages_in_time = defaultdict(dict)
+    resource_usages_in_time = defaultdict(ResourceUsage)
     
     for activity in sgs:
         latest_start = problem.compute_latest_start(activity)
         start_time = 0  
         for time_unit in reversed(range(latest_start+1)):
              actual_resource_usage = copy(resource_usages_in_time[time_unit])
-             add_resource_usage(actual_resource_usage, activity.demand)
-             if (is_resource_usage_greater_than_supply(actual_resource_usage, problem.resources) or (activity_in_conflict_in_precedence(problem, solution, activity, time_unit))):
+             actual_resource_usage.add_resource_usage(activity.demand)
+             if (actual_resource_usage.is_resource_usage_greater_than_supply(problem.resources) or (activity_in_conflict_in_precedence(problem, solution, activity, time_unit))):
                 
                  start_time = time_unit + 1
                  break
@@ -254,12 +251,11 @@ class Problem(object):
     def check_if_solution_feasible(self, activities_start_times):
         makespan = self.compute_makespan(activities_start_times)
         for i in xrange(makespan):
-            resource_usage = {}
+            resource_usage = ResourceUsage()
             for activity, start_time in activities_start_times.solution.iteritems():
                 if start_time <= i < start_time + activity.duration:
-                    add_resource_usage(resource_usage, activity.demand)
+                    resource_usage.add_resource_usage(activity.demand)
             
-            if is_resource_usage_greater_than_supply(resource_usage, 
-                                                        self.resources):
+            if resource_usage.is_resource_usage_greater_than_supply( self.resources):
                 return False
         return True
