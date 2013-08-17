@@ -17,6 +17,13 @@ class Activity(object):
         
     def __repr__(self):
         return self.name
+    
+    def __eq__(self, other):
+        return self.name == other.name
+    
+    def __hash__(self):
+        return hash(self.name)
+        
          
     #def active_tasks(proposed_solution, problem_definition): #sprawdz ktore zadania sa aktywne w czasie t
 
@@ -81,6 +88,7 @@ class SerialScheduleGenerationSchemeGenerator:
             sgs_to_return.append(current_activity)
             self._push_ready_activities_to_ready_to_schedule(current_activity, not_ready_to_schedule, ready_to_schedule)
         return sgs_to_return
+        
         
     def _extract_random_activity_from_list(self, ready_to_schedule):
         r = choice(list(ready_to_schedule))
@@ -159,7 +167,10 @@ class Problem(object):
         return self.activities_set - set([Activity.DUMMY_START, Activity.DUMMY_END])
     
     def successors(self, activity):
-        return self.activity_graph[activity]
+        try:
+            return self.activity_graph[activity]
+        except KeyError:
+            pass
     
     def predecessors(self, activity):
         return self.predecessors_dict[activity]
@@ -223,3 +234,19 @@ class Problem(object):
     
     def find_all_elements_without_predecessors(self):
         return self.successors(Activity.DUMMY_START)
+    
+    def is_valid_sgs(self, sgs):
+        for i in range(len(sgs)):
+           for j in range(i,len(sgs)):
+               activity1 = sgs[i] 
+               activity2 = sgs[j]
+               if activity2 in self.predecessors(activity1):
+                   return False
+        return True
+           
+        
+        
+        
+        
+        
+        

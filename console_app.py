@@ -4,6 +4,7 @@ Created on 17 Aug 2013
 @author: Aleksandra
 '''
 from class_solver import *
+from GeneticAlgorithmSolver import GeneticAlgorithmSolver
 
 activity1=Activity("a1",3,{1:2})
 activity2=Activity("a2",4,{1:3})
@@ -25,3 +26,5 @@ problem = Problem(activity_graph, resources)
 
 solver = GeneticAlgorithmSolver(problem)
 toolbox = solver.generate_toolbox_for_problem()
+solution = solver.solve()
+print problem.compute_makespan(solution)

@@ -40,7 +40,7 @@ class Test(unittest.TestCase):
                        
         
         self.sgs = [self.activity2, self.activity4, self.activity1, self.activity6, self.activity3, self.activity5]
-
+        self.sgs2 = [self.activity2, self.activity1, self.activity4, self.activity3, self.activity6, self.activity5]
     def test_solve(self):
         solver = GeneticAlgorithmSolver(self.problem)
         solution = solver.solve()
@@ -69,8 +69,11 @@ class Test(unittest.TestCase):
         problem = Problem(activity_graph, resources)  
         solution_sgs = Solution.generate_solution_from_serial_schedule_generation_scheme([activity1, activity2], problem)
         self.assertEqual(problem.compute_makespan(solution_sgs), 7, "Makespan is not egual 7")
-                
-
+    
+    def test_sgs_2_dict_3(self):             
+        solution = Solution.generate_solution_from_serial_schedule_generation_scheme(self.sgs2, self.problem)
+        #self.assertEqual(solution, self.start_times, "Expected %s, got %s" % (self.start_times, solution) )  
+        
     def test_compute_latest_start(self):
         latest_start = self.problem.compute_latest_start(self.activity1)
         self.assertEqual(latest_start, 10, "Latest start of the first activity should be 10")
@@ -123,12 +126,7 @@ class Test(unittest.TestCase):
         sgs_to_return = generator.generate_random_sgs()
         self.assertEqual(set(sgs_to_return), self.problem.non_dummy_activities(), "Sgs should have all activities")
         n = len(sgs_to_return)     
-        for i in range(n):
-            for j in range(i,n):
-                activity1 = sgs_to_return[i] 
-                activity2 = sgs_to_return[j]
-                self.assertFalse(activity2 in self.problem.predecessors(activity1), "Activity2 is prodecessor of ACtivity1")
-           
+        self.assertTrue(self.problem.is_valid_sgs(sgs_to_return), "Sgs should be valid")
                              
     def test_crossover_sgs_nonrandom(self):
         sgs_mum = [1,3,2,5,4,6]
@@ -137,6 +135,9 @@ class Test(unittest.TestCase):
         sgs_daughter, sgs_son = crossover_sgs_nonrandom(sgs_mum, sgs_dad, q)
         self.assertEqual(sgs_daughter, [1,3,2,4,6,5],"Daughter is not correctly generated %s" % str(sgs_daughter))
         self.assertEqual(sgs_son, [2,4,6,1,3,5],"Son is not correctly generated %s" % str(sgs_son))
+    
+
+        
         
             
 
