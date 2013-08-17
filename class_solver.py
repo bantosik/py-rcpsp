@@ -3,10 +3,11 @@ Created on 31 Jul 2013
 
 @author: Aleksandra
 '''
-from random import choice
+from random import choice, randint
 from deap import algorithms, tools, base, creator
 from copy import copy
 from collections import defaultdict 
+
 
 class Activity(object):
     def __init__(self, name, duration, demand):
@@ -134,41 +135,9 @@ class Solution(dict):   # fenotyp rozwiazania
                      break
             solution.set_start_time_for_activity(activity, start_time)
             update_resource_usages_in_time(resource_usages_in_time, activity, start_time)
-        return solution
-            
-    
+        return solution         
         
-class GeneticAlgorithmSolver(object):
-    # n= 300 ; cxpb = 0.5 ; mutpb = 0.2 ; ngen = 40
-    def __init__(self, size_of_population = 300, crossover_probability = 0.5, mutation_probability = 0.2, number_of_generations = 40):
-        self.size_of_population = size_of_population
-        self.crossover_probability = crossover_probability
-        self.mutation_probability = mutation_probability
-        self.number_of_generations = number_of_generations
-
-    
-    def generate_toolbox_for_problem(self):
-        toolbox = base.Toolbox()
-        creator.create("FitnessMin", base.Fitness, weights=(-1.0,))
-        creator.create("Individual", list, fitness=creator.FitnessMin)
-        
-        toolbox.register("individual", self.generate_individual)
-        
-    def generate_individual(self):
-        pass
-        
-     
-    def solve(self, problem):
-        self.initialize_problem(problem)
-        
-        toolbox = self.generate_toolbox_for_problem()
-        population = toolbox.population(n = self.size_of_population)
-        algorithms.eaSimple(population, toolbox, cxpb = self.crossover_probability , mutpb = self.mutation_probability, ngen = self.number_of_generations, verbose=False)
-        return self.generate_solution_from_individual(tools.selBest(population, 1))
-        
-
 class Problem(object):
-    
     def __init__(self, activity_graph, resources):
         self.activity_graph = activity_graph
         self.resources = resources

@@ -6,8 +6,7 @@ Created on 31 Jul 2013
 import unittest
 
 from class_solver import *
-
-
+from GeneticAlgorithmSolver import GeneticAlgorithmSolver, crossover_sgs_nonrandom
 
 class Test(unittest.TestCase):
     
@@ -43,8 +42,8 @@ class Test(unittest.TestCase):
         self.sgs = [self.activity2, self.activity4, self.activity1, self.activity6, self.activity3, self.activity5]
 
     def test_solve(self):
-        solver = GeneticAlgorithmSolver()
-        solution = solver.solve(self.problem)
+        solver = GeneticAlgorithmSolver(self.problem)
+        solution = solver.solve()
         self.assertEqual(solution.makespan, 13, "Makespan is not equal to 13")
         
     def test_check_if_solution_is_feasible(self):
@@ -131,7 +130,13 @@ class Test(unittest.TestCase):
                 self.assertFalse(activity2 in self.problem.predecessors(activity1), "Activity2 is prodecessor of ACtivity1")
            
                              
-
+    def test_crossover_sgs_nonrandom(self):
+        sgs_mum = [1,3,2,5,4,6]
+        sgs_dad = [2,4,6,1,3,5]
+        q = 3
+        sgs_daughter, sgs_son = crossover_sgs_nonrandom(sgs_mum, sgs_dad, q)
+        self.assertEqual(sgs_daughter, [1,3,2,4,6,5],"Daughter is not correctly generated %s" % str(sgs_daughter))
+        self.assertEqual(sgs_son, [2,4,6,1,3,5],"Son is not correctly generated %s" % str(sgs_son))
         
             
 
