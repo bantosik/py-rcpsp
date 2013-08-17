@@ -5,7 +5,9 @@ Created on 31 Jul 2013
 '''
 import unittest
 
-from class_solver import *
+from class_solver import Problem, insert_value_to_ordered_list, Solution, SerialScheduleGenerationSchemeGenerator, \
+    update_resource_usages_in_time, ResourceUsage, Activity
+
 from GeneticAlgorithmSolver import GeneticAlgorithmSolver, crossover_sgs_nonrandom
 
 class Test(unittest.TestCase):
@@ -45,7 +47,8 @@ class Test(unittest.TestCase):
         solver = GeneticAlgorithmSolver(self.problem)
         solution = solver.solve()
         makespan = self.problem.compute_makespan(solution)
-        self.assertEqual(makespan, 13, "Makespan is not equal to 13, in fact it is %d" % makespan)
+        self.assertEqual(makespan, 13, "Makespan is not equal to 13, in fact it is %d, %s" % (makespan, str(solution)))
+        
         
     def test_check_if_solution_is_feasible(self):
         is_feasible = self.problem.check_if_solution_feasible(self.start_times)  
@@ -85,6 +88,7 @@ class Test(unittest.TestCase):
         self.assertIs(succ_list[0], self.activity5, "activity5 should be successor of the activity3")
         
     def test_update_resource_usages_in_time(self):
+        from collections import defaultdict
         resource_usages_in_time = defaultdict(dict)
         resource_usages_in_time[1] = ResourceUsage({1:2,2:3})
         resource_usages_in_time[2] = ResourceUsage()
@@ -95,7 +99,6 @@ class Test(unittest.TestCase):
         self.assertEqual(resource_usages_in_time[1][1], 4, "Resource usage in point 1 for resource 1 should be 4")
         self.assertEqual(resource_usages_in_time[1][2], 3, "Resource usage in point 1 for resource 2 should be 3")
         self.assertEqual(resource_usages_in_time[2][1], 2, "Resource usage in point 2 for resource 1 should be 2")
-        
         
     def test_solution_equality(self):
         s = Solution()
@@ -136,6 +139,20 @@ class Test(unittest.TestCase):
         sgs_daughter, sgs_son = crossover_sgs_nonrandom(sgs_mum, sgs_dad, q)
         self.assertEqual(sgs_daughter, [1,3,2,4,6,5],"Daughter is not correctly generated %s" % str(sgs_daughter))
         self.assertEqual(sgs_son, [2,4,6,1,3,5],"Son is not correctly generated %s" % str(sgs_son))
+    
+    def test_insert_value_to_ordered_list(self):
+        l = [1,3,4,5]
+        insert_value_to_ordered_list(l, 2)
+        self.assertEqual(l, [1,2,3,4,5], "2 should be inserted after 1")
+        l = [1,4,5,6]
+        insert_value_to_ordered_list(l, 4)
+        self.assertEqual(l, [1,4,5,6], "list should remain unchanged")
+        l = [0]
+        insert_value_to_ordered_list(l, 4)
+        self.assertEqual(l, [0,4], "list should be updated properly")
+        
+        
+        
     
 
         

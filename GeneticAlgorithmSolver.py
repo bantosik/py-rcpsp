@@ -49,6 +49,7 @@ class GeneticAlgorithmSolver(object):
         toolbox.register("mate", crossover_sgs)
         toolbox.register("mutate", self.mutate_sgs, prob=0.05)
         toolbox.register("select", tools.selTournament, tournsize=3)
+        toolbox.register("clone", copy)
         
         return toolbox
      

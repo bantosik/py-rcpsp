@@ -7,6 +7,7 @@ from random import choice, randint
 from deap import algorithms, tools, base, creator
 from copy import copy
 from collections import defaultdict 
+from bisect import bisect_left
 
 
 class Activity(object):
@@ -24,14 +25,10 @@ class Activity(object):
     def __hash__(self):
         return hash(self.name)
         
-         
-    #def active_tasks(proposed_solution, problem_definition): #sprawdz ktore zadania sa aktywne w czasie t
-
 Activity.DUMMY_START = Activity("start",0, 0)
 Activity.DUMMY_END = Activity("end",0, 0)
 Activity.DUMMY_NODES = [Activity.DUMMY_START, Activity.DUMMY_END]
 
-    
 class ResourceUsage(dict):
     def add_resource_usage(self, demand):
         """
@@ -65,7 +62,6 @@ def update_resource_usages_in_time(resource_usages_in_time, activity, point_in_t
         actual_resource_usage = resource_usages_in_time[point]
         actual_resource_usage.add_resource_usage(activity.demand)
     
-  
 def activity_in_conflict_in_precedence(problem, solution, activity, proposed_start_time):
     for predecessor_activity in problem.predecessors(activity):
         if solution.get_start_time(predecessor_activity) + predecessor_activity.duration > proposed_start_time:   #samo zadanie nie wie o swoich poprzedniahc, ale wie o nich problem
@@ -130,20 +126,29 @@ class Solution(dict):   # fenotyp rozwiazania
     def generate_solution_from_serial_schedule_generation_scheme(sgs, problem):
         solution = Solution()
         resource_usages_in_time = defaultdict(ResourceUsage)
+        time_points = [0]
         
         for activity in sgs:
-            latest_start = problem.compute_latest_start(activity)
-            start_time = 0  
-            for time_unit in reversed(range(latest_start+1)):
-                 actual_resource_usage = copy(resource_usages_in_time[time_unit])
-                 actual_resource_usage.add_resource_usage(activity.demand)
-                 if (actual_resource_usage.is_resource_usage_greater_than_supply(problem.resources) or (activity_in_conflict_in_precedence(problem, solution, activity, time_unit))):
-                    
-                     start_time = time_unit + 1
-                     break
+            last_time = time_points[-1]
+            start_time = 0
+            for time_unit in reversed(time_points):
+                actual_resource_usage = copy(resource_usages_in_time[time_unit])
+                actual_resource_usage.add_resource_usage(activity.demand)
+                if (actual_resource_usage.is_resource_usage_greater_than_supply(problem.resources) or (activity_in_conflict_in_precedence(problem, solution, activity, time_unit))):
+                    start_time = last_time
+                    break
+                else:
+                    last_time = time_unit
             solution.set_start_time_for_activity(activity, start_time)
+            insert_value_to_ordered_list(time_points, start_time)
+            insert_value_to_ordered_list(time_points, start_time + activity.duration)         
             update_resource_usages_in_time(resource_usages_in_time, activity, start_time)
         return solution         
+    
+def insert_value_to_ordered_list(l, value):
+    i = bisect_left(l, value)
+    if i >= len(l) or not l[i] == value:
+        l.insert(i,value)
         
 class Problem(object):
     def __init__(self, activity_graph, resources):
@@ -159,6 +164,9 @@ class Problem(object):
         for activity, activity_successors in self.activity_graph.iteritems():
             for successor in activity_successors:
                 self.predecessors_dict[successor].append(activity)
+        
+        self.latest_starts = {}
+        self.latest_finishes = {}
                     
     def activities(self):
         return self.activities_set
@@ -192,25 +200,24 @@ class Problem(object):
         :type problem: class_solver.Problem
         :returns: point in time of latest start of activity
         """
-        latest_starts = {}
-        latest_finishes = {}
-        self._compute_latest_start_rec(activity, latest_starts, latest_finishes)
-        return latest_starts[activity]
-    
-    def _compute_latest_start_rec(self, activity, latest_starts, latest_finishes):
+        if activity in self.latest_starts:
+            return self.latest_starts[activity]
+        
         if activity is Activity.DUMMY_END:
             s = sum([x.duration for x in self.activities()])
-            latest_starts[activity] = s
-            latest_finishes[activity] = s
+            self.latest_starts[activity] = s
+            self.latest_finishes[activity] = s
+            return s
         else:
             current_min = sum([x.duration for x in self.activities()])
             for succ in self.successors(activity):
-                self._compute_latest_start_rec(succ, latest_starts, latest_finishes)
-                succ_latest_start = latest_starts[succ]
+                self.compute_latest_start(succ)
+                succ_latest_start = self.latest_starts[succ]
                 if succ_latest_start < current_min:
                     current_min = succ_latest_start
-            latest_finishes[activity] = current_min
-            latest_starts[activity] = current_min - activity.duration
+            self.latest_finishes[activity] = current_min
+            self.latest_starts[activity] = current_min - activity.duration
+            return self.latest_starts[activity]
     
     def compute_makespan(self, activities_start_times):
         makespan = 0                                                                                                                                                                                                                                             
