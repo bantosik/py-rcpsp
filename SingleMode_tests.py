@@ -5,7 +5,7 @@ Created on 31 Jul 2013
 '''
 import unittest
 
-from class_solver import Problem, insert_value_to_ordered_list, Solution, SerialScheduleGenerationSchemeGenerator, \
+from SingleModeClasses import Problem, insert_value_to_ordered_list, Solution, SerialScheduleGenerationSchemeGenerator, \
     update_resource_usages_in_time, ResourceUsage, Activity
 
 from GeneticAlgorithmSolver import GeneticAlgorithmSolver, crossover_sgs_nonrandom

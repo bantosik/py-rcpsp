@@ -3,7 +3,7 @@ Created on 17 Aug 2013
 
 @author: Aleksandra
 '''
-from class_solver import SerialScheduleGenerationSchemeGenerator, Solution
+from SingleModeClasses import SerialScheduleGenerationSchemeGenerator, Solution
 from deap import base, creator, tools, algorithms
 from random import randint, random
 from copy import copy
