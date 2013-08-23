@@ -5,8 +5,10 @@ Created on 31 Jul 2013
 '''
 import unittest
 
+from ResourceUsage import update_resource_usages_in_time, ResourceUsage
+
 from SingleModeClasses import Problem, insert_value_to_ordered_list, Solution, SerialScheduleGenerationSchemeGenerator, \
-    update_resource_usages_in_time, ResourceUsage, Activity
+    Activity
 
 from GeneticAlgorithmSolver import GeneticAlgorithmSolver, crossover_sgs_nonrandom
 
@@ -86,19 +88,6 @@ class Test(unittest.TestCase):
         succ_list = self.problem.successors(self.activity3)
         self.assertEqual(len(succ_list), 1, "activity3 should have only one successor")
         self.assertIs(succ_list[0], self.activity5, "activity5 should be successor of the activity3")
-        
-    def test_update_resource_usages_in_time(self):
-        from collections import defaultdict
-        resource_usages_in_time = defaultdict(dict)
-        resource_usages_in_time[1] = ResourceUsage({1:2,2:3})
-        resource_usages_in_time[2] = ResourceUsage()
-        activity1 = Activity("a1",2,{1:2})
-        point_in_time_1 = 1
-        update_resource_usages_in_time(resource_usages_in_time, activity1, point_in_time_1)
-        
-        self.assertEqual(resource_usages_in_time[1][1], 4, "Resource usage in point 1 for resource 1 should be 4")
-        self.assertEqual(resource_usages_in_time[1][2], 3, "Resource usage in point 1 for resource 2 should be 3")
-        self.assertEqual(resource_usages_in_time[2][1], 2, "Resource usage in point 2 for resource 1 should be 2")
         
     def test_solution_equality(self):
         s = Solution()
