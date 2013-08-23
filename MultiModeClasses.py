@@ -1,19 +1,19 @@
-'''
-Created on 31 Jul 2013
+import collections
+import copy 
 
-@author: Aleksandra
-'''
-from random import choice, randint
-from deap import algorithms, tools, base, creator
-from copy import copy
-from collections import defaultdict 
-from bisect import bisect_left
-
-from ResourceUsage import update_resource_usages_in_time, ResourceUsage
-
+import ResourceUsage
 import ListUtilities
 
-class Activity(object):
+def activity_in_conflict_in_precedence(problem, solution, activity, proposed_start_time):
+    for predecessor_activity in problem.predecessors(activity):
+        start_time_of_predecessor = solution.get_start_time(predecessor_activity)
+        predecessor_mode = solution.get_mode(predecessor_activity)
+        if start_time_of_predecessor + predecessor_mode.duration > proposed_start_time:   #samo zadanie nie wie o swoich poprzedniahc, ale wie o nich problem
+            return True
+    else:
+        return False
+
+class Mode(object):
     def __init__(self, name, duration, demand):
         self.duration = duration
         self.demand = demand
@@ -27,59 +27,37 @@ class Activity(object):
     
     def __hash__(self):
         return hash(self.name)
-        
-Activity.DUMMY_START = Activity("start",0, 0)
-Activity.DUMMY_END = Activity("end",0, 0)
-Activity.DUMMY_NODES = [Activity.DUMMY_START, Activity.DUMMY_END]
 
-def activity_in_conflict_in_precedence(problem, solution, activity, proposed_start_time):
-    for predecessor_activity in problem.predecessors(activity):
-        if solution.get_start_time(predecessor_activity) + predecessor_activity.duration > proposed_start_time:   #samo zadanie nie wie o swoich poprzedniahc, ale wie o nich problem
-            return True
-    else:
-        return False
-
-class SerialScheduleGenerationSchemeGenerator:
-    def __init__(self, problem):
-        self.problem = problem
+class Activity(object):
+    def __init__(self, name, mode_list):
+        self.mode_list = mode_list
+        self.name = name
         
-    def generate_random_sgs(self):
-        ready_to_schedule = set(self.problem.find_all_elements_without_predecessors()) #set
-        not_ready_to_schedule =  self.problem.non_dummy_activities() - set(ready_to_schedule)
-        
-        sgs_to_return = []
-        
-        for i in xrange(len(self.problem.non_dummy_activities())):
-            current_activity = self._extract_random_activity_from_list(ready_to_schedule)
-            sgs_to_return.append(current_activity)
-            self._push_ready_activities_to_ready_to_schedule(current_activity, not_ready_to_schedule, ready_to_schedule)
-        return sgs_to_return
-        
-        
-    def _extract_random_activity_from_list(self, ready_to_schedule):
-        r = choice(list(ready_to_schedule))
-        ready_to_schedule.remove(r)
-        return r
+    def __repr__(self):
+        return self.name
     
-    def _push_ready_activities_to_ready_to_schedule(self, current_activity, not_ready_to_schedule, ready_to_schedule):
-        for activity in self.problem.non_dummy_successors(current_activity):
-            for predecessor in  self.problem.non_dummy_predecessors(activity):
-                if predecessor in not_ready_to_schedule.union(ready_to_schedule):
-                    break
-            else:
-                not_ready_to_schedule.remove(activity)
-                ready_to_schedule.add(activity)
-                          
+    def __eq__(self, other):
+        return self.name == other.name
+    
+    def __hash__(self):
+        return hash(self.name)
+    
 class Solution(dict):   # fenotyp rozwiazania
     def __init__(self):
         self.makespan = 0
         self[Activity.DUMMY_START] = 0
+        self.mode_assigment = {Activity.DUMMY_START: None}
         
-    def set_start_time_for_activity(self, activity, start_time):
+    def set_start_time_for_activity(self, activity, start_time, mode):
         self[activity] = start_time
+        self.mode_assigment[activity] = mode
+        
         
     def get_start_time(self, activity):
         return self[activity]
+    
+    def get_mode(self, activity):
+        return self.mode_assigment[activity]
         
     def __str__(self):
         return "Solution: " + super.__str__(self)
@@ -91,30 +69,38 @@ class Solution(dict):   # fenotyp rozwiazania
         for i,j in self.iteritems():
             if other[i] != j:
                 return False
+            if other.get_mode(i) != self.get_mode(i):
+                return False
+            
         return True
     @staticmethod
     def generate_solution_from_serial_schedule_generation_scheme(sgs, problem):
         solution = Solution()
-        resource_usages_in_time = defaultdict(ResourceUsage)
+        resource_usages_in_time = collections.defaultdict(ResourceUsage.ResourceUsage)
         time_points = [0]
         
-        for activity in sgs:
+        for (activity, mode) in sgs:
             last_time = time_points[-1]
             start_time = 0
             for time_unit in reversed(time_points):
-                actual_resource_usage = copy(resource_usages_in_time[time_unit])
-                actual_resource_usage.add_resource_usage(activity.demand)
+                actual_resource_usage = copy.copy(resource_usages_in_time[time_unit])
+                actual_resource_usage.add_resource_usage(mode.demand)
                 if (actual_resource_usage.is_resource_usage_greater_than_supply(problem.resources) or (activity_in_conflict_in_precedence(problem, solution, activity, time_unit))):
                     start_time = last_time
                     break
                 else:
                     last_time = time_unit
-            solution.set_start_time_for_activity(activity, start_time)
+            solution.set_start_time_for_activity(activity, start_time, mode)
             ListUtilities.insert_value_to_ordered_list(time_points, start_time)
-            ListUtilities.insert_value_to_ordered_list(time_points, start_time + activity.duration)         
-            update_resource_usages_in_time(resource_usages_in_time, activity, start_time)
+            ListUtilities.insert_value_to_ordered_list(time_points, start_time + mode.duration)         
+            ResourceUsage.update_resource_usages_in_time(resource_usages_in_time, mode, start_time)
         return solution         
-        
+    
+
+Activity.DUMMY_START = Activity("start",[])
+Activity.DUMMY_END = Activity("end",[])
+Activity.DUMMY_NODES = [Activity.DUMMY_START, Activity.DUMMY_END]
+
 class Problem(object):
     def __init__(self, activity_graph, resources):
         self.activity_graph = activity_graph
@@ -125,7 +111,7 @@ class Problem(object):
             for nested_act in activity_graph[activity]:
                 self.activities_set.add(nested_act)
                 
-        self.predecessors_dict = defaultdict(list)
+        self.predecessors_dict = collections.defaultdict(list)
         for activity, activity_successors in self.activity_graph.iteritems():
             for successor in activity_successors:
                 self.predecessors_dict[successor].append(activity)
@@ -169,25 +155,25 @@ class Problem(object):
             return self.latest_starts[activity]
         
         if activity is Activity.DUMMY_END:
-            s = sum([x.duration for x in self.activities()])
+            s = sum([x.maximal_duration() for x in self.activities()])
             self.latest_starts[activity] = s
             self.latest_finishes[activity] = s
             return s
         else:
-            current_min = sum([x.duration for x in self.activities()])
+            current_min = sum([x.maximal_duration() for x in self.activities()])
             for succ in self.successors(activity):
                 self.compute_latest_start(succ)
                 succ_latest_start = self.latest_starts[succ]
                 if succ_latest_start < current_min:
                     current_min = succ_latest_start
             self.latest_finishes[activity] = current_min
-            self.latest_starts[activity] = current_min - activity.duration
+            self.latest_starts[activity] = current_min - activity.minimal_duration()
             return self.latest_starts[activity]
     
-    def compute_makespan(self, activities_start_times):
+    def compute_makespan(self, solution):
         makespan = 0                                                                                                                                                                                                                                             
-        for activity, start_time in activities_start_times.iteritems():
-            when_activity_ends = activity.duration + start_time
+        for activity, start_time in solution.iteritems():
+            when_activity_ends = solution.get_mode(activity).duration + start_time
             if when_activity_ends >= makespan:
                 makespan = when_activity_ends
         return makespan
@@ -197,8 +183,8 @@ class Problem(object):
         for i in xrange(makespan):
             resource_usage = ResourceUsage()
             for activity, start_time in solution.iteritems():
-                if start_time <= i < start_time + activity.duration:
-                    resource_usage.add_resource_usage(activity.demand)
+                if start_time <= i < start_time + solution.get_mode(activity).duration:
+                    resource_usage.add_resource_usage(solution.get_mode(activity).demand)
             
             if resource_usage.is_resource_usage_greater_than_supply( self.resources):
                 return False
@@ -216,9 +202,3 @@ class Problem(object):
                    return False
         return True
            
-        
-        
-        
-        
-        
-        
