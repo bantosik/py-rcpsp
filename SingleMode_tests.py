@@ -7,7 +7,7 @@ import unittest
 
 from ResourceUsage import update_resource_usages_in_time, ResourceUsage
 
-from SingleModeClasses import Problem, insert_value_to_ordered_list, Solution, SerialScheduleGenerationSchemeGenerator, \
+from SingleModeClasses import Problem, Solution, SerialScheduleGenerationSchemeGenerator, \
     Activity
 
 from GeneticAlgorithmSolver import GeneticAlgorithmSolver, crossover_sgs_nonrandom
@@ -129,24 +129,6 @@ class Test(unittest.TestCase):
         self.assertEqual(sgs_daughter, [1,3,2,4,6,5],"Daughter is not correctly generated %s" % str(sgs_daughter))
         self.assertEqual(sgs_son, [2,4,6,1,3,5],"Son is not correctly generated %s" % str(sgs_son))
     
-    def test_insert_value_to_ordered_list(self):
-        l = [1,3,4,5]
-        insert_value_to_ordered_list(l, 2)
-        self.assertEqual(l, [1,2,3,4,5], "2 should be inserted after 1")
-        l = [1,4,5,6]
-        insert_value_to_ordered_list(l, 4)
-        self.assertEqual(l, [1,4,5,6], "list should remain unchanged")
-        l = [0]
-        insert_value_to_ordered_list(l, 4)
-        self.assertEqual(l, [0,4], "list should be updated properly")
-        
-        
-        
-    
-
-        
-        
-            
 
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.test_solve']

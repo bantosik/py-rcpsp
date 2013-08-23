@@ -11,6 +11,8 @@ from bisect import bisect_left
 
 from ResourceUsage import update_resource_usages_in_time, ResourceUsage
 
+import ListUtilities
+
 class Activity(object):
     def __init__(self, name, duration, demand):
         self.duration = duration
@@ -108,15 +110,10 @@ class Solution(dict):   # fenotyp rozwiazania
                 else:
                     last_time = time_unit
             solution.set_start_time_for_activity(activity, start_time)
-            insert_value_to_ordered_list(time_points, start_time)
-            insert_value_to_ordered_list(time_points, start_time + activity.duration)         
+            ListUtilities.insert_value_to_ordered_list(time_points, start_time)
+            ListUtilities.insert_value_to_ordered_list(time_points, start_time + activity.duration)         
             update_resource_usages_in_time(resource_usages_in_time, activity, start_time)
         return solution         
-    
-def insert_value_to_ordered_list(l, value):
-    i = bisect_left(l, value)
-    if i >= len(l) or not l[i] == value:
-        l.insert(i,value)
         
 class Problem(object):
     def __init__(self, activity_graph, resources):
