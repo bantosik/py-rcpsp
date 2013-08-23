@@ -5,8 +5,6 @@ Created on 31 Jul 2013
 '''
 import unittest
 
-from ResourceUsage import update_resource_usages_in_time, ResourceUsage
-
 from SingleModeClasses import Problem, Solution, SerialScheduleGenerationSchemeGenerator, \
     Activity
 
