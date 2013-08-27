@@ -6,7 +6,10 @@ Created on 31 Jul 2013
 import unittest
 
 from MultiModeClasses import Mode, Activity, Solution, Problem
-from GeneticAlgorithmSolverMultiMode import GeneticAlgorithmSolver, crossover_sgs_nonrandom
+from GeneticAlgorithmSolverMultiMode import (GeneticAlgorithmSolver, 
+                                             crossover_sgs_nonrandom,
+                                             SerialScheduleGenerationSchemeGenerator)
+                                             
 
 class Test(unittest.TestCase):
     
@@ -88,13 +91,23 @@ class Test(unittest.TestCase):
     def test_solution_equality(self):
         s = Solution()
         o = Solution()
-        s.set_start_time_for_activity(self.activity1, 5)
-        s.set_start_time_for_activity(self.activity2, 3)
+        s.set_start_time_for_activity(self.activity1, 5, self.mode1a)
+        s.set_start_time_for_activity(self.activity2, 3, self.mode2)
         
-        o.set_start_time_for_activity(self.activity2, 3)
-        o.set_start_time_for_activity(self.activity1, 5)
+        o.set_start_time_for_activity(self.activity2, 3, self.mode2)
+        o.set_start_time_for_activity(self.activity1, 5, self.mode1a)
         self.assertEqual(s, o, "These solutions should be equal %s, %s" % (str(s), str(o)))
     
+    def test_solution_inequality(self):
+        s = Solution()
+        o = Solution()
+        s.set_start_time_for_activity(self.activity1, 5, self.mode1)
+        s.set_start_time_for_activity(self.activity2, 3, self.mode2)
+        
+        o.set_start_time_for_activity(self.activity2, 3, self.mode2)
+        o.set_start_time_for_activity(self.activity1, 5, self.mode1a)
+        self.assertFalse(s == o, "These solutions should be not equal %s, %s" % (str(s), str(o)))
+
     def test_push_ready_activities_to_ready_to_schedule(self):
         activity_graph = {Activity.DUMMY_START: [self.activity1],
                           self.activity1: [self.activity2, self.activity3],
@@ -117,24 +130,14 @@ class Test(unittest.TestCase):
         n = len(sgs_to_return)     
         self.assertTrue(self.problem.is_valid_sgs(sgs_to_return), "Sgs should be valid")
                              
-    def test_crossover_sgs_nonrandom(self):
-        sgs_mum = [1,3,2,5,4,6]
-        sgs_dad = [2,4,6,1,3,5]
-        q = 3
-        sgs_daughter, sgs_son = crossover_sgs_nonrandom(sgs_mum, sgs_dad, q)
-        self.assertEqual(sgs_daughter, [1,3,2,4,6,5],"Daughter is not correctly generated %s" % str(sgs_daughter))
-        self.assertEqual(sgs_son, [2,4,6,1,3,5],"Son is not correctly generated %s" % str(sgs_son))
+#    def test_crossover_sgs_nonrandom(self):
+#        sgs_mum = [(1, 1),(3, 2),(2, 3),(5, 4),(4, 5),(6, 6)]
+#        sgs_dad = [(2, 7),(4, 8),(6, 9),(1, 10),(3, 11),(5, 12)]
+#        q = 3
+#        sgs_daughter, sgs_son = crossover_sgs_nonrandom(sgs_mum, sgs_dad, q)
+#        self.assertEqual(sgs_daughter, [1,3,2,4,6,5],"Daughter is not correctly generated %s" % str(sgs_daughter))
+#        self.assertEqual(sgs_son, [2,4,6,1,3,5],"Son is not correctly generated %s" % str(sgs_son))
     
-    def test_insert_value_to_ordered_list(self):
-        l = [1,3,4,5]
-        insert_value_to_ordered_list(l, 2)
-        self.assertEqual(l, [1,2,3,4,5], "2 should be inserted after 1")
-        l = [1,4,5,6]
-        insert_value_to_ordered_list(l, 4)
-        self.assertEqual(l, [1,4,5,6], "list should remain unchanged")
-        l = [0]
-        insert_value_to_ordered_list(l, 4)
-        self.assertEqual(l, [0,4], "list should be updated properly")
         
         
         
