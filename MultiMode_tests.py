@@ -6,7 +6,7 @@ Created on 31 Jul 2013
 import unittest
 
 from MultiModeClasses import Mode, Activity, Solution, Problem
-#from GeneticAlgorithmSolverMultiMode import GeneticAlgorithmSolver, crossover_sgs_nonrandom
+from GeneticAlgorithmSolverMultiMode import GeneticAlgorithmSolver, crossover_sgs_nonrandom
 
 class Test(unittest.TestCase):
     
@@ -83,21 +83,8 @@ class Test(unittest.TestCase):
 
     def test_compute_latest_start(self):
         latest_start = self.problem.compute_latest_start(self.activity1)
-        self.assertEqual(latest_start, 10, "Latest start of the first activity should be 10")
+        self.assertEqual(latest_start, 30, "Latest start of the first activity should be 10 and is %d" % (latest_start))
        
-    def test_update_resource_usages_in_time(self):
-        from collections import defaultdict
-        resource_usages_in_time = defaultdict(dict)
-        resource_usages_in_time[1] = ResourceUsage({1:2,2:3})
-        resource_usages_in_time[2] = ResourceUsage()
-        mode1 = Mode("a1",2,{1:2})
-        point_in_time_1 = 1
-        update_resource_usages_in_time(resource_usages_in_time, mode1, point_in_time_1)
-        
-        self.assertEqual(resource_usages_in_time[1][1], 4, "Resource usage in point 1 for resource 1 should be 4")
-        self.assertEqual(resource_usages_in_time[1][2], 3, "Resource usage in point 1 for resource 2 should be 3")
-        self.assertEqual(resource_usages_in_time[2][1], 2, "Resource usage in point 2 for resource 1 should be 2")
-        
     def test_solution_equality(self):
         s = Solution()
         o = Solution()

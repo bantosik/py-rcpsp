@@ -27,6 +27,8 @@ class Mode(object):
     
     def __hash__(self):
         return hash(self.name)
+    
+Mode.nullMode = Mode("null", 0, {})
 
 class Activity(object):
     def __init__(self, name, mode_list):
@@ -42,11 +44,18 @@ class Activity(object):
     def __hash__(self):
         return hash(self.name)
     
+    def maximal_duration(self):
+        return max(x.duration for x in self.mode_list)
+    
+    def minimal_duration(self):
+        return min(x.duration for x in self.mode_list)
+
+    
 class Solution(dict):   # fenotyp rozwiazania
     def __init__(self):
         self.makespan = 0
         self[Activity.DUMMY_START] = 0
-        self.mode_assigment = {Activity.DUMMY_START: None}
+        self.mode_assigment = {Activity.DUMMY_START: Mode.nullMode}
         
     def set_start_time_for_activity(self, activity, start_time, mode):
         self[activity] = start_time
@@ -97,8 +106,8 @@ class Solution(dict):   # fenotyp rozwiazania
         return solution         
     
 
-Activity.DUMMY_START = Activity("start",[])
-Activity.DUMMY_END = Activity("end",[])
+Activity.DUMMY_START = Activity("start",[Mode.nullMode])
+Activity.DUMMY_END = Activity("end",[Mode.nullMode])
 Activity.DUMMY_NODES = [Activity.DUMMY_START, Activity.DUMMY_END]
 
 class Problem(object):
@@ -181,7 +190,7 @@ class Problem(object):
     def check_if_solution_feasible(self, solution):
         makespan = self.compute_makespan(solution)
         for i in xrange(makespan):
-            resource_usage = ResourceUsage()
+            resource_usage = ResourceUsage.ResourceUsage()
             for activity, start_time in solution.iteritems():
                 if start_time <= i < start_time + solution.get_mode(activity).duration:
                     resource_usage.add_resource_usage(solution.get_mode(activity).demand)
