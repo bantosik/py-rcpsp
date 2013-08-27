@@ -28,6 +28,20 @@ class Test(unittest.TestCase):
         self.activity5 = Activity("a5",[self.mode5])
         self.mode6=Mode("m6",4,{1:2})
         self.activity6 = Activity("a6",[self.mode6])
+        
+        self.non_mode1=Mode("m1",3,{1:2},{1:1})
+        self.non_mode1a=Mode("m1a",23,{1:2},{1:9})
+        self.non_activity1 = Activity("a1",[self.non_mode1, self.non_mode1a]) 
+        self.non_mode2=Mode("m2",4,{1:3},{1:1})
+        self.non_activity2 = Activity("a2",[self.non_mode2])
+        self.non_mode3=Mode("m3",2,{1:4})
+        self.non_activity3 = Activity("a3",[self.non_mode3])
+        self.non_mode4=Mode("m4",2,{1:4})
+        self.non_activity4 = Activity("a4",[self.non_mode4])
+        self.non_mode5=Mode("m5",1,{1:3})
+        self.non_activity5 = Activity("a5",[self.non_mode5])
+        self.non_mode6=Mode("m6",4,{1:2})
+        self.non_activity6 = Activity("a6",[self.non_mode6])
     
         activity_graph = {Activity.DUMMY_START:[self.activity1,self.activity2],
                           self.activity1:[self.activity3], 
@@ -38,8 +52,10 @@ class Test(unittest.TestCase):
                           self.activity6:[Activity.DUMMY_END]}
         
         resources = {1:4}
+        nonrenewable = {1:3}
         
         self.problem = Problem(activity_graph, resources)
+        self.non_problem = Problem(activity_graph, resources, nonrenewable)
         
         self.start_times = Solution()
         self.start_times.set_start_time_for_activity(self.activity1, 6, self.mode1)
@@ -48,7 +64,24 @@ class Test(unittest.TestCase):
         self.start_times.set_start_time_for_activity(self.activity4, 4, self.mode4)
         self.start_times.set_start_time_for_activity(self.activity5, 12, self.mode5)
         self.start_times.set_start_time_for_activity(self.activity6, 6, self.mode6)
+        
+        self.non_renewable_feasible_solution = Solution()
+        self.non_renewable_feasible_solution.set_start_time_for_activity(self.non_activity1, 6, self.non_mode1)
+        self.non_renewable_feasible_solution.set_start_time_for_activity(self.non_activity2, 0, self.non_mode2)
+        self.non_renewable_feasible_solution.set_start_time_for_activity(self.non_activity3, 10, self.non_mode3)
+        self.non_renewable_feasible_solution.set_start_time_for_activity(self.non_activity4, 4, self.non_mode4)
+        self.non_renewable_feasible_solution.set_start_time_for_activity(self.non_activity5, 12, self.non_mode5)
+        self.non_renewable_feasible_solution.set_start_time_for_activity(self.non_activity6, 6, self.non_mode6)
                        
+        
+        self.non_renewable_unfeasible_solution = Solution()
+        self.non_renewable_unfeasible_solution.set_start_time_for_activity(self.non_activity1, 6, self.non_mode1a)
+        self.non_renewable_unfeasible_solution.set_start_time_for_activity(self.non_activity2, 0, self.non_mode2)
+        self.non_renewable_unfeasible_solution.set_start_time_for_activity(self.non_activity3, 10, self.non_mode3)
+        self.non_renewable_unfeasible_solution.set_start_time_for_activity(self.non_activity4, 4, self.non_mode4)
+        self.non_renewable_unfeasible_solution.set_start_time_for_activity(self.non_activity5, 12, self.non_mode5)
+        self.non_renewable_unfeasible_solution.set_start_time_for_activity(self.non_activity6, 6, self.non_mode6)
+     
         
         self.sgs = [(self.activity2, self.mode2), 
                     (self.activity4, self.mode4),
@@ -75,6 +108,14 @@ class Test(unittest.TestCase):
     def test_check_if_solution_is_feasible(self):
         is_feasible = self.problem.check_if_solution_feasible(self.start_times)  
         self.assertTrue(is_feasible, "solution is shown as unfeasible")
+        
+    def test_non_renewable_check_if_solution_is_feasible(self):
+        is_feasible = self.non_problem.check_if_solution_feasible(self.non_renewable_feasible_solution)  
+        self.assertTrue(is_feasible, "solution is shown as unfeasible")
+
+    def test_non_renewable_unfeasible_check_if_solution_is_feasible(self):
+        is_feasible = self.non_problem.check_if_solution_feasible(self.non_renewable_unfeasible_solution)  
+        self.assertFalse(is_feasible, "solution is shown as feasible")
 
     def test_compute_makespan(self):
         makespan = self.problem.compute_makespan(self.start_times)
