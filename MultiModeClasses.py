@@ -15,9 +15,10 @@ def activity_in_conflict_in_precedence(problem, solution, activity, proposed_sta
         return False
 
 class Mode(object):
-    def __init__(self, name, duration, demand):
+    def __init__(self, name, duration, demand, non_renewable_demand = {}):
         self.duration = duration
         self.demand = demand
+        self.non_renewable_demand = non_renewable_demand
         self.name = name
         
     def __repr__(self):
@@ -112,9 +113,10 @@ Activity.DUMMY_END = Activity("end",[Mode.nullMode])
 Activity.DUMMY_NODES = [Activity.DUMMY_START, Activity.DUMMY_END]
 
 class Problem(object):
-    def __init__(self, activity_graph, resources):
+    def __init__(self, activity_graph, resources, nonrenewable_resources = {}):
         self.activity_graph = activity_graph
-        self.resources = resources 
+        self.resources = resources
+        self.nonrenewable_resources = nonrenewable_resources
         self.activities_set = set() 
         for activity in activity_graph:
             self.activities_set.add(activity)
@@ -190,15 +192,26 @@ class Problem(object):
     
     def check_if_solution_feasible(self, solution):
         makespan = self.compute_makespan(solution)
+        result = True
+        
+        # for renewable resources check all timepoints
         for i in xrange(makespan):
             resource_usage = ResourceUsage.ResourceUsage()
             for activity, start_time in solution.iteritems():
                 if start_time <= i < start_time + solution.get_mode(activity).duration:
                     resource_usage.add_resource_usage(solution.get_mode(activity).demand)
             
-            if resource_usage.is_resource_usage_greater_than_supply( self.resources):
-                return False
-        return True
+            if resource_usage.is_resource_usage_greater_than_supply( self.resources ):
+                result = False
+            
+        # for nonrenewable resources sum usage from all mode
+        resource_usage = ResourceUsage.ResourceUsage()
+        for a in solution:
+            resource_usage.add_resource_usage(solution.get_mode(a).non_renewable_demand)
+        if resource_usage.is_resource_usage_greater_than_supply( self.nonrenewable_resources):
+            result = False
+        
+        return result 
     
     def find_all_elements_without_predecessors(self):
         return self.successors(Activity.DUMMY_START)
