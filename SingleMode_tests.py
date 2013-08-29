@@ -5,10 +5,9 @@ Created on 31 Jul 2013
 '''
 import unittest
 
-from SingleModeClasses import Problem, Solution, SerialScheduleGenerationSchemeGenerator, \
-    Activity
+from SingleModeClasses import Problem, Solution, Activity
 
-from GeneticAlgorithmSolver import GeneticAlgorithmSolver, crossover_sgs_nonrandom
+from GeneticAlgorithmSolver import GeneticAlgorithmSolver, crossover_sgs_nonrandom, SerialScheduleGenerationSchemeGenerator
 
 class Test(unittest.TestCase):
     

@@ -58,7 +58,15 @@ class Solution(dict):   # fenotyp rozwiazania
         self.makespan = 0
         self[Activity.DUMMY_START] = 0
         self.mode_assigment = {Activity.DUMMY_START: Mode.nullMode}
-        
+    
+    @staticmethod
+    def makeSolution(activities, modes):
+        solution = Solution()
+        for a, mode in zip(activities, modes):
+            solution[a] = 0
+            solution.mode_assigment[a] = mode
+        return solution
+            
     def set_start_time_for_activity(self, activity, start_time, mode):
         self[activity] = start_time
         self.mode_assigment[activity] = mode
@@ -90,7 +98,7 @@ class Solution(dict):   # fenotyp rozwiazania
         resource_usages_in_time = collections.defaultdict(ResourceUsage.ResourceUsage)
         time_points = [0]
         
-        for (activity, mode) in sgs:
+        for activity, mode in sgs:
             last_time = time_points[-1]
             start_time = 0
             for time_unit in reversed(time_points):
@@ -191,20 +199,12 @@ class Problem(object):
         return makespan
     
     def check_if_solution_feasible(self, solution):
-        makespan = self.compute_makespan(solution)
+        result = self.check_nonrenewable_resources(solution)
+        result2 = self.check_renewable_resources(solution)
+        return result and result2
+
+    def check_renewable_resources(self, solution):
         result = True
-        
-        # for renewable resources check all timepoints
-        for i in xrange(makespan):
-            resource_usage = ResourceUsage.ResourceUsage()
-            for activity, start_time in solution.iteritems():
-                if start_time <= i < start_time + solution.get_mode(activity).duration:
-                    resource_usage.add_resource_usage(solution.get_mode(activity).demand)
-            
-            if resource_usage.is_resource_usage_greater_than_supply( self.resources ):
-                result = False
-            
-        # for nonrenewable resources sum usage from all mode
         resource_usage = ResourceUsage.ResourceUsage()
         for a in solution:
             resource_usage.add_resource_usage(solution.get_mode(a).non_renewable_demand)
@@ -213,14 +213,27 @@ class Problem(object):
         
         return result 
     
+    def check_nonrenewable_resources(self, solution):
+        makespan = self.compute_makespan(solution)
+        result = True
+        for i in xrange(makespan):
+            resource_usage = ResourceUsage.ResourceUsage()
+            for activity, start_time in solution.iteritems():
+                if start_time <= i < start_time + solution.get_mode(activity).duration:
+                    resource_usage.add_resource_usage(solution.get_mode(activity).demand)
+            
+            if resource_usage.is_resource_usage_greater_than_supply( self.resources ):
+                result = False
+        return result
+    
     def find_all_elements_without_predecessors(self):
         return self.successors(Activity.DUMMY_START)
     
     def is_valid_sgs(self, sgs):
         for i in range(len(sgs)):
            for j in range(i,len(sgs)):
-               activity1 = sgs[i] 
-               activity2 = sgs[j]
+               activity1 = sgs[i][0] 
+               activity2 = sgs[j][0]
                if activity2 in self.predecessors(activity1):
                    return False
         return True
