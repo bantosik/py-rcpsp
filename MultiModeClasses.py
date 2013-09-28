@@ -1,6 +1,8 @@
 import collections
 import copy
 import random
+from random import choice
+from GeneticAlgorithmSolver import SerialScheduleGenerationSchemeGenerator
 
 import ResourceUsage
 import ListUtilities
@@ -279,5 +281,34 @@ class Problem(object):
     
 def choose_random_mode(activity):
     return random.choice(activity.mode_list)
-    
 
+
+class MultiModeSgsMaker(object):
+    def __init__(self, problem, retries):
+        self.problem = problem
+        self.retries = retries
+        self.generator = SerialScheduleGenerationSchemeGenerator(problem)
+
+    def generate_random_sgs(self):
+        sgs = self.generator.generate_random_sgs()
+        modes = self.generate_modes(sgs)
+
+        return zip(sgs, modes)
+
+    def generate_modes(self, sgs):
+        modes =[choice(activity.mode_list) for activity in sgs]
+        for _i in xrange(self.retries):
+            temp_solution = Solution.makeSolution(sgs, modes)
+            if self.problem.check_nonrenewable_resources(temp_solution):
+                return modes
+            else:
+                self.modify_mode(sgs, modes)
+        return modes
+
+    def modify_mode(self, activities, modes):
+        multimode_activities = \
+        [(i,a) for (i,a) in enumerate(activities) if len(a.mode_list) > 1]
+        index_to_improve, activity = choice(multimode_activities)
+        wrong_mode = modes[index_to_improve]
+        new_mode = choice([mode for mode in activity.mode_list if mode is not wrong_mode])
+        modes[index_to_improve] = new_mode

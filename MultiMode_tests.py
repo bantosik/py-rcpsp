@@ -5,10 +5,8 @@ Created on 31 Jul 2013
 '''
 import unittest
 
-from MultiModeClasses import Mode, Activity, Solution, Problem
-from GeneticAlgorithmSolverMultiMode import (GeneticAlgorithmSolver, 
-                                             crossover_sgs_nonrandom,
-                                             SerialScheduleGenerationSchemeGenerator, MultiModeSgsMaker)
+from MultiModeClasses import Mode, Activity, Solution, Problem, MultiModeSgsMaker
+from NaiveGeneticAlgorithmSolverMultiMode import NaiveGeneticAlgorithmSolverMultiMode
                                              
 
 class Test(unittest.TestCase):
@@ -99,7 +97,7 @@ class Test(unittest.TestCase):
         
         
     def test_solve(self):
-        solver = GeneticAlgorithmSolver(self.problem)
+        solver = NaiveGeneticAlgorithmSolverMultiMode(self.problem)
         solution = solver.solve()
         makespan = self.problem.compute_makespan(solution)
         self.assertEqual(makespan, 13, "Makespan is not equal to 13, in fact it is %d, %s" % (makespan, str(solution)))
