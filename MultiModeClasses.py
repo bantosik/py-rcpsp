@@ -6,6 +6,11 @@ import ResourceUsage
 import ListUtilities
 
 def activity_in_conflict_in_precedence(problem, solution, activity, proposed_start_time):
+    """
+    function to test if given activity if scheduled at given time 'proposed_start_time'
+    would be in conflict with any of the already scheduled activities from 'solution'
+    with the precedence constraints as given in problem
+    """
     for predecessor_activity in problem.predecessors(activity):
         start_time_of_predecessor = solution.get_start_time(predecessor_activity)
         predecessor_mode = solution.get_mode(predecessor_activity)
@@ -15,6 +20,13 @@ def activity_in_conflict_in_precedence(problem, solution, activity, proposed_sta
         return False
 
 class Mode(object):
+    """
+    Class for keeping properties of mode of activity. Keeps its name, has specified
+    duration which is positive integer value, and demand which is dictionary mapping
+    from resource identifier to demand to this resource in given mode. Second
+    dictionary non_renewable_demand keeps demand for nonrenewable resources in
+    the same format as demand parameter.
+    """
     def __init__(self, name, duration, demand, non_renewable_demand = {}):
         self.duration = duration
         self.demand = demand
@@ -29,7 +41,10 @@ class Mode(object):
     
     def __hash__(self):
         return hash(self.name)
-    
+
+"""
+dummy activities has its special null mode.
+"""
 Mode.nullMode = Mode("null", 0, {})
 
 class Activity(object):
@@ -54,6 +69,16 @@ class Activity(object):
 
     
 class Solution(dict):   # fenotyp rozwiazania
+    """
+    class represents a solution in the form from which higher level components can
+    retrieve basic feature of the solution such as starting times of every task
+    and mode assignment
+
+    Solution class is itself a dictionary which for every activity stores its starting time.
+    >>> startTime = solution[activity]
+    It stores also a public dictionary mode_assignment which stores assignment of modes to each task
+    >>> mode = solution.mode_assignment[activity]
+    """
     def __init__(self):
         self.makespan = 0
         self[Activity.DUMMY_START] = 0
@@ -61,6 +86,10 @@ class Solution(dict):   # fenotyp rozwiazania
     
     @staticmethod
     def makeSolution(activities, modes):
+        """
+        make incomplete solution from the list of tasks will have start
+        time set to zero.
+        """
         solution = Solution()
         for a, mode in zip(activities, modes):
             solution[a] = 0
@@ -68,6 +97,9 @@ class Solution(dict):   # fenotyp rozwiazania
         return solution
             
     def set_start_time_for_activity(self, activity, start_time, mode):
+        """
+        sets mode and start time for a given activity.
+        """
         self[activity] = start_time
         self.mode_assigment[activity] = mode
         
@@ -92,8 +124,14 @@ class Solution(dict):   # fenotyp rozwiazania
                 return False
             
         return True
+
     @staticmethod
     def generate_solution_from_serial_schedule_generation_scheme(sgs, problem):
+        """
+        creates new solution object from a valid serial schedule generation scheme, which is
+        list of tuples containing activities and corresponding modes
+        solution will be resource feasible
+        """
         solution = Solution()
         resource_usages_in_time = collections.defaultdict(ResourceUsage.ResourceUsage)
         time_points = [0]
@@ -243,38 +281,3 @@ def choose_random_mode(activity):
     return random.choice(activity.mode_list)
     
 
-
-class SerialScheduleGenerationSchemeGenerator:
-    def __init__(self, problem):
-        self.problem = problem
-        
-    def generate_random_sgs(self):
-        ready_to_schedule = set(self.problem.find_all_elements_without_predecessors()) #set
-        not_ready_to_schedule =  self.problem.non_dummy_activities() - set(ready_to_schedule)
-        
-        sgs_to_return = []
-        
-        for i in xrange(len(self.problem.non_dummy_activities())):
-            current_activity = self._extract_random_activity_from_list(ready_to_schedule)
-            sgs_to_return.append(current_activity)
-            self._push_ready_activities_to_ready_to_schedule(current_activity, not_ready_to_schedule, ready_to_schedule)
-        
-        result = [(activity, choose_random_mode(activity)) for activity in sgs_to_return]
-        
-        return result
-        
-        
-    def _extract_random_activity_from_list(self, ready_to_schedule):
-        r = choice(list(ready_to_schedule))
-        ready_to_schedule.remove(r)
-        return r
-    
-    def _push_ready_activities_to_ready_to_schedule(self, current_activity, not_ready_to_schedule, ready_to_schedule):
-        for activity in self.problem.non_dummy_successors(current_activity):
-            for predecessor in  self.problem.non_dummy_predecessors(activity):
-                if predecessor in not_ready_to_schedule.union(ready_to_schedule):
-                    break
-            else:
-                not_ready_to_schedule.remove(activity)
-                ready_to_schedule.add(activity)
-           

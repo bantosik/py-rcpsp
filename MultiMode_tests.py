@@ -8,7 +8,7 @@ import unittest
 from MultiModeClasses import Mode, Activity, Solution, Problem
 from GeneticAlgorithmSolverMultiMode import (GeneticAlgorithmSolver, 
                                              crossover_sgs_nonrandom,
-                                             SerialScheduleGenerationSchemeGenerator)
+                                             SerialScheduleGenerationSchemeGenerator, MultiModeSgsMaker)
                                              
 
 class Test(unittest.TestCase):
@@ -149,24 +149,9 @@ class Test(unittest.TestCase):
         o.set_start_time_for_activity(self.activity1, 5, self.mode1a)
         self.assertFalse(s == o, "These solutions should be not equal %s, %s" % (str(s), str(o)))
 
-    def test_push_ready_activities_to_ready_to_schedule(self):
-        activity_graph = {Activity.DUMMY_START: [self.activity1],
-                          self.activity1: [self.activity2, self.activity3],
-                          self.activity2: [self.activity4],
-                          self.activity3: [self.activity4],
-                          self.activity4: [Activity.DUMMY_END]}
-        problem = Problem(activity_graph, {})
-        ready_to_schedule = set()
-        not_ready_to_schedule = set([self.activity2, self.activity3, self.activity4])
-        current_activity = self.activity1
-        generator = SerialScheduleGenerationSchemeGenerator(problem,4)
-        generator._push_ready_activities_to_ready_to_schedule(current_activity, not_ready_to_schedule, ready_to_schedule)
-        self.assertEqual(ready_to_schedule, set([self.activity2, self.activity3]), "Ready to schedule should be update correctly")
-        self.assertEqual(not_ready_to_schedule, set([self.activity4]), "Not ready to schedule should be update correctly")
-        
     def test_generate_random_sgs_from_problem(self):
-        generator = SerialScheduleGenerationSchemeGenerator(self.problem,4)
-        sgs_to_return = generator.generate_individual()
+        generator = MultiModeSgsMaker(self.problem,4)
+        sgs_to_return = generator.generate_random_sgs()
         self.assertEqual(set([x[0] for x in sgs_to_return]), self.problem.non_dummy_activities(), "Sgs should have all activities")
         n = len(sgs_to_return)     
         self.assertTrue(self.problem.is_valid_sgs(sgs_to_return), "Sgs should be valid")

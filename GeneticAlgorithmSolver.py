@@ -104,12 +104,7 @@ class GeneticAlgorithmSolver(object):
             if self.problem.is_valid_sgs(copy_of_sgs):
                 new_sgs = copy_of_sgs
         return (new_sgs,)
-                
-        
-        
-        
-        
-        
+
 def find_lowest_index_non_existing_in(list1, list2):
     for index, element in enumerate(list1):
         if element not in list2:
