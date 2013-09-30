@@ -132,7 +132,7 @@ class Solution(dict):   # fenotyp rozwiazania
         """
         creates new solution object from a valid serial schedule generation scheme, which is
         list of tuples containing activities and corresponding modes
-        solution will be resource feasible
+        solution will be resource feasible for renewable resources
         """
         solution = Solution()
         resource_usages_in_time = collections.defaultdict(ResourceUsage.ResourceUsage)
