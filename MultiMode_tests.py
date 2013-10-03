@@ -33,6 +33,7 @@ class Test(unittest.TestCase):
         self.non_mode2=Mode("m2",4,{1:3},{1:1})
         self.non_activity2 = Activity("a2",[self.non_mode2])
         self.non_mode3=Mode("m3",2,{1:4})
+
         self.non_activity3 = Activity("a3",[self.non_mode3])
         self.non_mode4=Mode("m4",2,{1:4})
         self.non_activity4 = Activity("a4",[self.non_mode4])

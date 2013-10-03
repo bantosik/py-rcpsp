@@ -22,6 +22,7 @@ def leftover_capacity(problem, resource, mode_assignment):
     return problem.non_renewable_resources[resource] - sum(mode.demand[resource] for mode in mode_assignment)
 
 def evaluate_sgs_function(SolutionClass, problem_instance, sgs):
+    #TODO: make test of evaluation function
     solution = SolutionClass.generate_solution_from_serial_schedule_generation_scheme(sgs, problem_instance)
     #unpack activities and modes list to the separate lists
     activities, modes = zip(*sgs)
@@ -34,6 +35,7 @@ def evaluate_sgs_function(SolutionClass, problem_instance, sgs):
 
 class GeneticAlgorithmSolverMultimode(GenericGeneticAlgorithmSolver):
     def __init__(self, *args, **kwargs):
+        #TODO: implement crossover and mutate functions
         self.crossover_sgs = crossover_sgs_multimode
         self.mutate_sgs = mutate_sgs_multimode
         if not 'number_of_retries' in kwargs:

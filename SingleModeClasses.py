@@ -8,6 +8,7 @@ from deap import algorithms, tools, base, creator
 from copy import copy
 from collections import defaultdict 
 from bisect import bisect_left
+from BaseProblem import BaseProblem
 
 from ResourceUsage import update_resource_usages_in_time, ResourceUsage
 
@@ -86,8 +87,9 @@ class Solution(dict):   # fenotyp rozwiazania
             update_resource_usages_in_time(resource_usages_in_time, activity, start_time)
         return solution         
         
-class Problem(object):
+class Problem(BaseProblem):
     def __init__(self, activity_graph, resources):
+        self.ActivityClass = Activity
         self.activity_graph = activity_graph
         self.resources = resources
         self.activities_set = set() 
@@ -103,28 +105,6 @@ class Problem(object):
         
         self.latest_starts = {}
         self.latest_finishes = {}
-                    
-    def activities(self):
-        return self.activities_set
-    
-    def non_dummy_activities(self):
-        return self.activities_set - set([Activity.DUMMY_START, Activity.DUMMY_END])
-    
-    def successors(self, activity):
-        try:
-            return self.activity_graph[activity]
-        except KeyError:
-            pass
-    
-    def predecessors(self, activity):
-        return self.predecessors_dict[activity]
-    
-    def non_dummy_predecessors(self,activity):
-        return [x for x in self.predecessors(activity) if x not in Activity.DUMMY_NODES]
-    
-    def non_dummy_successors(self,activity):
-        return [x for x in self.successors(activity) if x not in Activity.DUMMY_NODES]
-    
     
     def compute_latest_start(self, activity):
         """Computes latest possible start for activity with dependencies with other 

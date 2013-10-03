@@ -2,6 +2,7 @@ import collections
 import copy
 import random
 from random import choice
+from BaseProblem import BaseProblem
 from GeneticAlgorithmSolver import SerialScheduleGenerationSchemeGenerator
 
 import ResourceUsage
@@ -160,8 +161,9 @@ Activity.DUMMY_START = Activity("start",[Mode.nullMode])
 Activity.DUMMY_END = Activity("end",[Mode.nullMode])
 Activity.DUMMY_NODES = [Activity.DUMMY_START, Activity.DUMMY_END]
 
-class Problem(object):
+class Problem(BaseProblem):
     def __init__(self, activity_graph, resources, nonrenewable_resources = {}):
+        self.ActivityClass = Activity
         self.activity_graph = activity_graph
         self.resources = resources
         self.nonrenewable_resources = nonrenewable_resources
@@ -178,29 +180,7 @@ class Problem(object):
         
         self.latest_starts = {}
         self.latest_finishes = {}
-                    
-    def activities(self):
-        return self.activities_set
-    
-    def non_dummy_activities(self):
-        return self.activities_set - set([Activity.DUMMY_START, Activity.DUMMY_END])
-    
-    def successors(self, activity):
-        try:
-            return self.activity_graph[activity]
-        except KeyError:
-            pass
-    
-    def predecessors(self, activity):
-        return self.predecessors_dict[activity]
-    
-    def non_dummy_predecessors(self,activity):
-        return [x for x in self.predecessors(activity) if x not in Activity.DUMMY_NODES]
-    
-    def non_dummy_successors(self,activity):
-        return [x for x in self.successors(activity) if x not in Activity.DUMMY_NODES]
-    
-    
+
     def compute_latest_start(self, activity):
         """Computes latest possible start for activity with dependencies with other 
         activities defined in problem
