@@ -14,9 +14,5 @@ Before you decide to use it, please contact us first for some guidance notes how
 we have submitted the paper with documentation for this project.
 
 
-Best regards,
-szredinger: (antosik.bartek[at]gmail.com)
-amelinska: (aleksandra.melinska[at]gmail.com)
-
  
   
